@@ -31,12 +31,36 @@ def get_one_breakfast(breakfast_id):
     chosen_breakfast = validate_breakfast(breakfast_id)
     return jsonify(chosen_breakfast.to_dict())
 
+@breakfast_bp.route("/<breakfast_id>", methods = ["PUT"])
+def update_one_breakfast(breakfast_id):
+    update_breakfast = validate_breakfast(breakfast_id)    
+    request_body = request.get_json()
+
+    try:
+        update_breakfast.name = request_body["name"]
+        update_breakfast.rating = request_body["rating"]
+        update_breakfast.prep_time = request_body["prep_time"]
+    except KeyError:
+        return jsonify({"message": "Missing necessary information"}), 400
+
+    db.session.commit()
+    return make_response(f"Breakfast {update_breakfast.name} successfully updated", 200)
+
+@breakfast_bp.route("/<breakfast_id>", methods = ["DELETE"])
+def delete_one_breakfast(breakfast_id):
+    breakfast_to_be_deleted = validate_breakfast(breakfast_id)
+
+    db.session.delete(breakfast_to_be_deleted)
+    db.session.commit()
+
+    return jsonify({"message": f"Successfully deleted breakfast {breakfast_to_be_deleted.name}"}, 200)
+
+
 def validate_breakfast(breakfast_id):
     try:
         breakfast_id = int(breakfast_id)
-    except: 
+    except ValueError: 
         abort(make_response({"message": f"breakfast {breakfast_id} not found"}, 400))
-
     chosen_breakfast = Breakfast.query.get(breakfast_id)
     if not chosen_breakfast:
         abort(make_response({"message": f"breakfast {breakfast_id} not found"}, 404))
