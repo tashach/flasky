@@ -7,11 +7,16 @@ breakfast_bp = Blueprint("breakfast", __name__, url_prefix = "/breakfast")
 
 @breakfast_bp.route("", methods = ["GET"])
 def get_all_breakfasts():
+    rating_query_value = request.args.get("rating")
+    if rating_query_value is not None:
+        breakfasts = Breakfast.query.filter_by(rating = rating_query_value)
+    else:
+        breakfasts = Breakfast.query.all()
+
     result = [] 
-    all_breakfasts = Breakfast.query.all()
-    for item in all_breakfasts:
+    for item in breakfasts:
         result.append(item.to_dict())
-    return jsonify(result), 200
+    return jsonify(result)
 
 @breakfast_bp.route("", methods = ["POST"])
 def create_one_breakfast():
@@ -24,7 +29,7 @@ def create_one_breakfast():
     db.session.add(new_breakfast)
     db.session.commit()
 
-    return make_response("msg: "f"Successfully created Breakfast with id = {new_breakfast.id}", 201)
+    return jsonify({"msg": f"Successfully created Breakfast with id = {new_breakfast.id}"})
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["GET"])
 def get_one_breakfast(breakfast_id):
@@ -44,7 +49,7 @@ def update_one_breakfast(breakfast_id):
         return jsonify({"message": "Missing necessary information"}), 400
 
     db.session.commit()
-    return make_response(f"Breakfast {update_breakfast.name} successfully updated", 200)
+    return jsonify(f"Breakfast {update_breakfast.name} successfully updated")
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["DELETE"])
 def delete_one_breakfast(breakfast_id):
@@ -53,7 +58,7 @@ def delete_one_breakfast(breakfast_id):
     db.session.delete(breakfast_to_be_deleted)
     db.session.commit()
 
-    return jsonify({"message": f"Successfully deleted breakfast {breakfast_to_be_deleted.name}"}, 200)
+    return jsonify({"message": f"Successfully deleted breakfast {breakfast_to_be_deleted.name}"})
 
 
 def validate_breakfast(breakfast_id):
