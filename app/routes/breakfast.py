@@ -8,6 +8,7 @@ breakfast_bp = Blueprint("breakfast", __name__, url_prefix = "/breakfast")
 @breakfast_bp.route("", methods = ["GET"])
 def get_all_breakfasts():
     rating_query_value = request.args.get("rating")
+
     if rating_query_value is not None:
         breakfasts = Breakfast.query.filter_by(rating = rating_query_value)
     else:
@@ -16,6 +17,7 @@ def get_all_breakfasts():
     result = [] 
     for item in breakfasts:
         result.append(item.to_dict())
+        
     return jsonify(result)
 
 @breakfast_bp.route("", methods = ["POST"])
@@ -29,7 +31,7 @@ def create_one_breakfast():
     db.session.add(new_breakfast)
     db.session.commit()
 
-    return jsonify({"msg": f"Successfully created Breakfast with id = {new_breakfast.id}"})
+    return jsonify({"msg": f"Successfully created Breakfast with id = {new_breakfast.id}"}), 201
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["GET"])
 def get_one_breakfast(breakfast_id):
@@ -70,4 +72,3 @@ def validate_breakfast(breakfast_id):
     if not chosen_breakfast:
         abort(make_response({"message": f"breakfast {breakfast_id} not found"}, 404))
     return chosen_breakfast
-
