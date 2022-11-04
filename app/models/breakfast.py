@@ -13,3 +13,11 @@ class Breakfast(db.Model):
             "rating": self.rating,
             "prep_time": self.prep_time
         }
+
+    @classmethod
+    def from_dict(cls, cls_dict):
+        return cls(
+            name = cls_dict["name"],
+            rating = cls_dict["rating"],
+            prep_time = cls_dict["prep_time"]
+        )

@@ -23,11 +23,7 @@ def get_all_breakfasts():
 @breakfast_bp.route("", methods = ["POST"])
 def create_one_breakfast():
     request_body = request.get_json()
-    new_breakfast = Breakfast(
-        name = request_body['name'],
-        rating = request_body['rating'],
-        prep_time = request_body['prep_time']
-    )
+    new_breakfast = Breakfast.from_dict(request_body)
     db.session.add(new_breakfast)
     db.session.commit()
 
@@ -35,12 +31,13 @@ def create_one_breakfast():
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["GET"])
 def get_one_breakfast(breakfast_id):
-    chosen_breakfast = validate_breakfast(breakfast_id)
+    chosen_breakfast = validate_model_id(Breakfast, breakfast_id)
+
     return jsonify(chosen_breakfast.to_dict())
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["PUT"])
 def update_one_breakfast(breakfast_id):
-    update_breakfast = validate_breakfast(breakfast_id)    
+    update_breakfast = validate_model_id(Breakfast, breakfast_id)    
     request_body = request.get_json()
 
     try:
@@ -51,11 +48,12 @@ def update_one_breakfast(breakfast_id):
         return jsonify({"message": "Missing necessary information"}), 400
 
     db.session.commit()
+
     return jsonify(f"Breakfast {update_breakfast.name} successfully updated")
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["DELETE"])
 def delete_one_breakfast(breakfast_id):
-    breakfast_to_be_deleted = validate_breakfast(breakfast_id)
+    breakfast_to_be_deleted = validate_model_id(Breakfast, breakfast_id)
 
     db.session.delete(breakfast_to_be_deleted)
     db.session.commit()
@@ -63,12 +61,15 @@ def delete_one_breakfast(breakfast_id):
     return jsonify({"message": f"Successfully deleted breakfast {breakfast_to_be_deleted.name}"})
 
 
-def validate_breakfast(breakfast_id):
+def validate_model_id(cls, model_id):
     try:
-        breakfast_id = int(breakfast_id)
+        model_id = int(model_id)
     except ValueError: 
-        abort(make_response({"message": f"breakfast {breakfast_id} not found"}, 400))
-    chosen_breakfast = Breakfast.query.get(breakfast_id)
-    if not chosen_breakfast:
-        abort(make_response({"message": f"breakfast {breakfast_id} not found"}, 404))
-    return chosen_breakfast
+        return abort(make_response({"message": f"invalid data type: {model_id}"}, 400))
+
+    chosen_object = cls.query.get(model_id)
+
+    if not chosen_object:
+        return abort(make_response({"message": f"{cls.__name__} {model_id} not found"}, 404))
+
+    return chosen_object
